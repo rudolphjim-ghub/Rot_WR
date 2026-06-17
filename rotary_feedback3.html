@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stakeholder Feedback Portal</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #e2e8f0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { margin-bottom: 32px; }
+        .step-container { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: var(--primary); }
+        .feedback-list { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+        .comment { background: var(--bg); padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+        .comment-meta { font-size: 0.85rem; font-weight: bold; color: #64748b; margin-bottom: 4px; }
+        form { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; margin-bottom: 24px; }
+        input, textarea { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; align-self: flex-start; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Project Next Steps: Stakeholder Feedback</h1>
+        <p>Review the proposed next steps below and share your input. All comments are synced live from Google Sheets.</p>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-container">
+        <h2>Option 1: Delay the Rotary involvement in Window Rock for one school year, then reevalate next year</h2>
+        <p>This option would be funded by NightMoves and would work with the school to get another group of students engaged in the program. It would also demonstrate Window Rocks commitment to the MOU of which many steps were missed last year (e.g., Computer support, allocated class time, Sophmore or Juniors in the class).</p>
+        
+        <form onsubmit="submitFeedback(event, 'step1')">
+            <input type="text" id="name-step1" placeholder="Your Name" required>
+            <textarea id="comment-step1" placeholder="Your feedback on Step 1..." rows="3" required></textarea>
+            <button type="submit">Submit Feedback</button>
+        </form>
+
+        <div class="feedback-list" id="comments-step1"><h3>Stakeholder Input</h3></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-container">
+        <h2>Option 2: End the Rotary participation in this project</h2>
+        <p>Unfortunately this program did not have the success this year as we hoped.  Most of the students were seniors and only 1 senior and 2 juniors will continue into the next school year. The support from Window Rock did not meet the MOU and it is not clear if they will next year.  Use the effort as a lessons learned and know that many students did benefit from the NightMoves and Brainwise training but not to the extent as we proposed in the Global Grant</p>
+        
+        <form onsubmit="submitFeedback(event, 'step2')">
+            <input type="text" id="name-step2" placeholder="Your Name" required>
+            <textarea id="comment-step2" placeholder="Your feedback on Step 2..." rows="3" required></textarea>
+            <button type="submit">Submit Feedback</button>
+        </form>
+
+        <div class="feedback-list" id="comments-step2"><h3>Stakeholder Input</h3></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-container">
+        <h2>Option 3: Redirect the effort to another school.  </h2>
+        <p>This would potentially let us leverage the lessons learned at Window Rock and get momenteum at a different school. Linc has identified a school that has a strong STEM and workforce focus that is Native American run (Window Rock is an AZ public school). There is a risk that we only have 1 year of funding. </p>
+        
+        <form onsubmit="submitFeedback(event, 'step3')">
+            <input type="text" id="name-step3" placeholder="Your Name" required>
+            <textarea id="comment-step3" placeholder="Your feedback on Step 3..." rows="3" required></textarea>
+            <button type="submit">Submit Feedback</button>
+        </form>
+
+        <div class="feedback-list" id="comments-step3"><h3>Stakeholder Input</h3></div>
+    </div>
+
+    <script>
+        // PASTE YOUR COPIED GOOGLE APPS SCRIPT URL HERE
+        const API_URL = "https://script.google.com/macros/s/AKfycbzur8_aD_TNGN-C2zfbUJ9KPb_siBjla_vaTCeJMGva-y1zDLs1uTVLkZbM8dDefJjf/exec";
+
+        window.onload = function() {
+            if(API_URL === "YOUR_WEB_APP_URL_HERE") {
+                alert("Please add your Google Apps Script URL to line 66 of the HTML code.");
+                return;
+            }
+            loadComments();
+        }
+
+        async function loadComments() {
+            try {
+                const response = await fetch(API_URL);
+                const comments = await response.json();
+                
+                ['step1', 'step2', 'step3'].forEach(id => {
+                    document.getElementById(`comments-${id}`).innerHTML = '<h3>Stakeholder Input</h3>';
+                });
+
+                // Reverse the array so that the newest spreadsheet rows display first
+                comments.reverse().forEach(c => {
+                    const container = document.getElementById(`comments-${c.step}`);
+                    if (container) {
+                        const commentHTML = `
+                            <div class="comment">
+                                <div class="comment-meta">${escapeHTML(c.name)}</div>
+                                <div>${escapeHTML(c.comment)}</div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', commentHTML);
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading feedback:", error);
+            }
+        }
+
+        async function submitFeedback(event, stepId) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('button');
+            
+            const nameVal = document.getElementById(`name-${stepId}`).value;
+            const commentVal = document.getElementById(`comment-${stepId}`).value;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Sending...";
+
+            const urlEncodedData = `step=${encodeURIComponent(stepId)}&name=${encodeURIComponent(nameVal)}&comment=${encodeURIComponent(commentVal)}`;
+
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: urlEncodedData
+                });
+
+                form.reset();
+                setTimeout(loadComments, 1500); 
+            } catch (error) {
+                alert("Failed to submit feedback. Check connection.");
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Feedback";
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
